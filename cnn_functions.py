@@ -166,15 +166,15 @@ def compute_cost(Z4, Y, lambda_touch = 4, lambda_no_touch = 0.8, lambda_coord = 
     cost_coord -- tensor of the coordinate cost function
     cost_touch_present -- tensor of the touch presence cost function
     """
-    mask = Y[:,:,:,0]
-    mask2 = tf.stack([Y[:,:,:,0], Y[:,:,:,0]], axis = -1)
+    # Create a mask for evaluating cost only at labelled touch locations
+    mask = tf.stack([Y[:,:,:,0], Y[:,:,:,0]], axis = -1)
     
+    # Evaluate the individual cost function contributors
     cost_touch_present = focal_loss(Z4[:,:,:,0], Y[:,:,:,0], lambda_touch, lambda_no_touch, gamma)
+    cost_coord = lambda_coord * tf.reduce_sum(tf.square(tf.multiply(tf.subtract(Y[:,:,:,1:3], Z4[:,:,:,1:3]), mask)))
+    cost_class = lambda_class * tf.reduce_sum(tf.square(tf.multiply(tf.subtract(Y[:,:,:,3:5], Z4[:,:,:,3:5]), mask)))
     
-    cost_coord = lambda_coord * tf.reduce_sum(tf.square(tf.multiply(tf.subtract(Y[:,:,:,1:3], Z4[:,:,:,1:3]), mask2)))
-    
-    cost_class = lambda_class * tf.reduce_sum(tf.square(tf.multiply(tf.subtract(Y[:,:,:,3:5], Z4[:,:,:,3:5]), mask2)))
-    
+    # Cost function
     cost  = cost_touch_present + cost_coord + cost_class
     
     return cost, cost_coord, cost_touch_present

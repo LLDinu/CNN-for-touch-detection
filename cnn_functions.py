@@ -187,10 +187,10 @@ def train_model(X_train, Y_train, X_test, Y_test, learning_rate,
     CONV2D -> RELU -> MAXPOOL -> CONV_DW + CONV_PW -> RELU -> CONV_DW + CONV_PW -> RELU -> CONV2D
     
     Arguments:
-    X_train -- training set data, of shape (None, 16, 32, 2)
-    Y_train -- training set labels, of shape (None, 8, 16, 4)
-    X_test -- test set data, of shape (None, 16, 32, 2)
-    Y_test -- test set labels, of shape (None, 8, 16, 4)
+    X_train -- training set data, of shape [None, n_Hx, n_Wx, n_Cx]
+    Y_train -- training set labels, of shape [None, n_Hy, n_Wy, n_Cy]
+    X_test -- test set data, of shape [None, n_Hx, n_Wx, n_Cx]
+    Y_test -- test set labels, of shape [None, n_Hy, n_Wy, n_Cy]
     learning_rate -- learning rate of the optimizer
     num_epochs -- number of epochs of the optimization loop
     minibatch_size -- size of a minibatch

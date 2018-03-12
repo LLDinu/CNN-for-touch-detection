@@ -133,7 +133,7 @@ def forward_propagation(X, parameters):
     A2 = tf.nn.relu(Z2b)
     
     # CONV_DW: filters W3a, stride 1, padding 'SAME'
-    Z3a = tf.nn.depthwise_conv2d_native(A2b, W3a, strides = [1,1,1,1], padding = 'SAME')
+    Z3a = tf.nn.depthwise_conv2d_native(A2, W3a, strides = [1,1,1,1], padding = 'SAME')
     Z3a += b3a
     # CONV_PW: filters W3b, stride 1, padding 'SAME'
     Z3b = tf.nn.conv2d(Z3a, W3b, strides = [1,1,1,1], padding = 'SAME')
@@ -142,18 +142,18 @@ def forward_propagation(X, parameters):
     A3 = tf.nn.relu(Z3b)
     
     # CONV2D: filters W4, stride 1, padding 'SAME'
-    Z4 = tf.nn.conv2d(A3b, W4, strides = [1,1,1,1], padding = 'SAME')
+    Z4 = tf.nn.conv2d(A3, W4, strides = [1,1,1,1], padding = 'SAME')
     Z4 += b4
     
     return A1, A2, A3, Z4
 
 
-def compute_cost(Z4, Y, lambda_touch = 4, lambda_no_touch = 0.8, lambda_coord = 0.5, lambda_class = 0.5, gamma = 4.5):
+def compute_cost(Z, Y, lambda_touch = 4, lambda_no_touch = 0.8, lambda_coord = 0.5, lambda_class = 0.5, gamma = 4.5):
     """
     Computes the cost function
     
     Arguments:
-    Z4 -- output of forward propagation (output of the last CONV unit), of shape (number of examples, 8, 16, 5)
+    Z -- output of forward propagation (output of the last CONV unit), of shape (number of examples, 8, 16, 5)
     Y -- "true" labels vector placeholder, same shape as Z4
     lambda_touch -- scalar, parameter which weighs the touch prediction loss where a touch is present 
     lambda_no_touch -- scalar, parameter which weighs the touch prediction loss where a touch is not present 
@@ -170,9 +170,9 @@ def compute_cost(Z4, Y, lambda_touch = 4, lambda_no_touch = 0.8, lambda_coord = 
     mask = tf.stack([Y[:,:,:,0], Y[:,:,:,0]], axis = -1)
     
     # Evaluate the individual cost function contributors
-    cost_touch_present = focal_loss(Z4[:,:,:,0], Y[:,:,:,0], lambda_touch, lambda_no_touch, gamma)
-    cost_coord = lambda_coord * tf.reduce_sum(tf.square(tf.multiply(tf.subtract(Y[:,:,:,1:3], Z4[:,:,:,1:3]), mask)))
-    cost_class = lambda_class * tf.reduce_sum(tf.square(tf.multiply(tf.subtract(Y[:,:,:,3:5], Z4[:,:,:,3:5]), mask)))
+    cost_touch_present = focal_loss(Z[:,:,:,0], Y[:,:,:,0], lambda_touch, lambda_no_touch, gamma)
+    cost_coord = lambda_coord * tf.reduce_sum(tf.square(tf.multiply(tf.subtract(Y[:,:,:,1:3], Z[:,:,:,1:3]), mask)))
+    cost_class = lambda_class * tf.reduce_sum(tf.square(tf.multiply(tf.subtract(Y[:,:,:,3:5], Z[:,:,:,3:5]), mask)))
     
     # Cost function
     cost  = cost_touch_present + cost_coord + cost_class
@@ -220,16 +220,16 @@ def train_model(X_train, Y_train, X_test, Y_test, learning_rate,
     parameters = initialize_parameters(n_Cx, n_Cy)
     
     # Forward propagation: Build the forward propagation in the tensorflow graph
-    _,_,_,Z4 = forward_propagation(X, parameters)
+    _,_,_,Z = forward_propagation(X, parameters)
     
     # Cost function: Add cost function to tensorflow graph
-    cost, cost_coord, cost_touch_present = compute_cost(Z4, Y)
+    cost, cost_coord, cost_touch_present = compute_cost(Z, Y)
     
     # Backpropagation: Define the tensorflow optimizer (AdamOptimizer) that minimizes the cost.
     optimizer = tf.train.AdamOptimizer(learning_rate = learning_rate).minimize(cost)
     
     # Calculate the correct predictions (considering all elements of the output image)
-    correct_prediction = tf.equal(tf.greater(Z4[:,:,:,0], 0.), tf.greater(Y[:,:,:,0], 0.5))
+    correct_prediction = tf.equal(tf.greater(Z[:,:,:,0], 0.), tf.greater(Y[:,:,:,0], 0.5))
     
     # Calculate accuracy on the test set (considering all elements of the output image)
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
@@ -285,13 +285,13 @@ def train_model(X_train, Y_train, X_test, Y_test, learning_rate,
             
             # Evaluate the precision/recall of the train/test sets every 25 epochs
             if print_cost == True and epoch % 25 == 0 and epoch > 49:    
-                z = Z4.eval({X: X_train})
+                z = Z.eval({X: X_train})
                 precision_train, recall_train, err_dist_train = test_model_during_training(z, Y_train)
                 precisions_train.append(precision_train)
                 recalls_train.append(recall_train)
                 err_dists_train.append(err_dist_train)
                 
-                z = Z4.eval({X: X_test})
+                z = Z.eval({X: X_test})
                 precision_test, recall_test, err_dist_test = test_model_during_training(z, Y_test)
                 precisions_test.append(precision_test)
                 recalls_test.append(recall_test)
@@ -329,10 +329,10 @@ def train_model(X_train, Y_train, X_test, Y_test, learning_rate,
             plt.title('train/test recall loss vs epochs')
             plt.show()
         else:
-            z = Z4.eval({X: X_train})
-            precision_train, recall_train, err_dist_train = test_model_during_training_v5(z, Y_train)
-            z = Z4.eval({X: X_test})
-            precision_test, recall_test, err_dist_test = test_model_during_training_v5(z, Y_test)
+            z = Z.eval({X: X_train})
+            precision_train, recall_train, err_dist_train = test_model_during_training(z, Y_train)
+            z = Z.eval({X: X_test})
+            precision_test, recall_test, err_dist_test = test_model_during_training(z, Y_test)
             print(" 1. Train set precision = " + str(precision_train))
             print(" 1. Train set recall = " + str(recall_train))
             print(" 1. Train set error distance = " + str(err_dist_train))

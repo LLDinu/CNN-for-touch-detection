@@ -5,6 +5,10 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow.python.framework import ops
 from tensorflow.python.ops import array_ops
+from sympy.utilities.iterables import multiset_permutations
+from scipy.optimize import linear_sum_assignment
+from scipy.spatial.distance import cdist
+
 
 def load_dataset():
     """

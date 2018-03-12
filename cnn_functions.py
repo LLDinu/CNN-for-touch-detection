@@ -32,7 +32,7 @@ def create_placeholders(n_Hx, n_Wx, n_Cx, n_Hy, n_Wy, n_Cy):
     return X, Y
 
 
-def initialize_parameters(n_Cx, n_C1 = 8, n_C2 = 16, n_C3 = 32, n_Cy):
+def initialize_parameters(n_Cx, n_Cy, n_C1 = 8, n_C2 = 16, n_C3 = 32):
     """
     Initializes weight parameters to build a neural network with tensorflow. The shapes are:
                         W1  : [3, 3, n_Cx, n_C1]
